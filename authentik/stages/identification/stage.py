@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import make_password
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponse
+from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import PolymorphicProxySerializer, extend_schema_field
@@ -99,6 +100,7 @@ class IdentificationChallenge(Challenge):
     password_fields = BooleanField()
     allow_show_password = BooleanField(default=False)
     application_pre = CharField(required=False)
+    application_pre_launch = CharField(required=False)
     flow_designation = ChoiceField(FlowDesignation.choices)
     captcha_stage = CaptchaChallenge(required=False, allow_null=True)
 
@@ -315,9 +317,12 @@ class IdentificationStageView(ChallengeStageView):
         # If the user has been redirected to us whilst trying to access an
         # application, PLAN_CONTEXT_APPLICATION is set in the flow plan
         if PLAN_CONTEXT_APPLICATION in self.executor.plan.context:
-            challenge.initial_data["application_pre"] = self.executor.plan.context.get(
+            app: Application = self.executor.plan.context.get(
                 PLAN_CONTEXT_APPLICATION, Application()
-            ).name
+            )
+            challenge.initial_data["application_pre"] = app.name
+            if launch_url := app.get_launch_url():
+                challenge.initial_data["application_pre_launch"] = launch_url
         if (
             PLAN_CONTEXT_DEVICE in self.executor.plan.context
             and PLAN_CONTEXT_DEVICE_AUTH_TOKEN in self.executor.plan.context
