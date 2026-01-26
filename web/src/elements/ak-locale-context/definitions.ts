@@ -42,19 +42,7 @@ const debug: LocaleRow = [
 
 // prettier-ignore
 const LOCALE_TABLE: LocaleRow[] = [
-    ["de",      /^de([_-]|$)/i,      () => msg("German"),                () => import("#locales/de")],
     ["en",      /^en([_-]|$)/i,      () => msg("English"),               () => import("#locales/en")],
-    ["es",      /^es([_-]|$)/i,      () => msg("Spanish"),               () => import("#locales/es")],
-    ["fr",      /^fr([_-]|$)/i,      () => msg("French"),                () => import("#locales/fr")],
-    ["it",      /^it([_-]|$)/i,      () => msg("Italian"),               () => import("#locales/it")],
-    ["ko",      /^ko([_-]|$)/i,      () => msg("Korean"),                () => import("#locales/ko")],
-    ["nl",      /^nl([_-]|$)/i,      () => msg("Dutch"),                 () => import("#locales/nl")],
-    ["pl",      /^pl([_-]|$)/i,      () => msg("Polish"),                () => import("#locales/pl")],
-    ["ru",      /^ru([_-]|$)/i,      () => msg("Russian"),               () => import("#locales/ru")],
-    ["tr",      /^tr([_-]|$)/i,      () => msg("Turkish"),               () => import("#locales/tr")],
-    ["zh_TW",   /^zh[_-]TW$/i,       () => msg("Taiwanese Mandarin"),    () => import("#locales/zh_TW")],
-    ["zh-Hans", /^zh(\b|_)/i,        () => msg("Chinese (simplified)"),  () => import("#locales/zh-Hans")],
-    ["zh-Hant", /^zh[_-](HK|Hant)/i, () => msg("Chinese (traditional)"), () => import("#locales/zh-Hant")],
     debug
 ];
 
