@@ -997,10 +997,6 @@
   <source>No form found</source>
   <target>Aucun formulaire trouvé</target>
 </trans-unit>
-<trans-unit id="s059358bf402de018">
-  <source>Element inside the form slot is not a Form</source>
-  <target>L'élément à l'intérieur de l'emplacement du formulaire n'est pas un formulaire</target>
-</trans-unit>
 <trans-unit id="s7f073c746d0f6324">
   <source>Form actions</source>
   <target>Actions du formulaire</target>
@@ -2986,7 +2982,7 @@
   <target>Le fournisseur n'est assigné à aucune application.</target>
 </trans-unit>
 <trans-unit id="sc9175cb129fdc306">
-  <source>Update <x id="0" equiv-text="${item.verboseName}"/></source>
+  <source>Update <x id="0" equiv-text="${this.objectLabel}"/></source>
   <target>Mettre à jour
         <x id="0" equiv-text="${item.verboseName}"/></target>
 </trans-unit>
@@ -4371,9 +4367,6 @@ doesn't pass when either or both of the selected options are equal or above the 
 </trans-unit>
 <trans-unit id="s80b0feb2a6b98ef9">
   <source>Connectors</source>
-</trans-unit>
-<trans-unit id="s58d0ed0cc064ec4f">
-  <source>Update Connector</source>
 </trans-unit>
 <trans-unit id="s06b8c7e7fb99c1d8">
   <source>Connector(s)</source>
@@ -10091,7 +10084,7 @@ Les liaisons avec les groupes/utilisateurs sont vérifiées par rapport à l'uti
   <note from="lit-localize">Indicates the number of unread notifications in the notification drawer</note>
 </trans-unit>
 <trans-unit id="s42636dae6e29892e">
-  <source>Agent version: <x id="0" equiv-text="${this.agentVersion(conn) ?? &quot;-&quot;}"/></source>
+  <source>Agent version: <x id="0" equiv-text="${vendorData.agent_version ?? &quot;-&quot;}"/></source>
 </trans-unit>
 <trans-unit id="s6dd24e14615f1369">
   <source>Warning: Flow imports are blueprint files, which may contain objects other than flows (such as users, policies, etc).</source>
@@ -10179,6 +10172,42 @@ Les liaisons avec les groupes/utilisateurs sont vérifiées par rapport à l'uti
 </trans-unit>
 <trans-unit id="sd0de938d9c37ad5f">
   <source>Use a Passkey or security key to prove your identity.</source>
+</trans-unit>
+<trans-unit id="s6173e24ed3ba956e">
+  <source>Successfully updated Fleet connector.</source>
+</trans-unit>
+<trans-unit id="sc9b84fdc2119ed1f">
+  <source>Successfully created Fleet connector.</source>
+</trans-unit>
+<trans-unit id="s6a087e34edeadc1f">
+  <source>Connector name...</source>
+</trans-unit>
+<trans-unit id="sc8a067f02f4cf520">
+  <source>Fleet settings</source>
+</trans-unit>
+<trans-unit id="sd5434d21a084c48f">
+  <source>Fleet Server URL</source>
+</trans-unit>
+<trans-unit id="s10320a36724d7e1a">
+  <source>Fleet API Token</source>
+</trans-unit>
+<trans-unit id="s4f0d6329461ac269">
+  <source>Map users</source>
+</trans-unit>
+<trans-unit id="s0770384b6d1e7075">
+  <source>When enabled, users detected by Fleet will be mapped in authentik, granting them access to the device.</source>
+</trans-unit>
+<trans-unit id="s140417fe6bad13ab">
+  <source>Map teams to device access group</source>
+</trans-unit>
+<trans-unit id="sa8383f7f7ff1a62e">
+  <source>When enabled, Fleet teams will be mapped to Device access groups. Missing device access groups are automatically created. Devices assigned to a different group are not re-assigned</source>
+</trans-unit>
+<trans-unit id="sfec0c302ab140e30">
+  <source>Software</source>
+</trans-unit>
+<trans-unit id="form.headline.update">
+  <source>Update <x id="0" equiv-text="${item.verboseName}"/></source>
 </trans-unit>
 </body>
 </file>
