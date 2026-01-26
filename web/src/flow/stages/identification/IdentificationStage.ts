@@ -318,10 +318,16 @@ export class IdentificationStage extends BaseStage<
         }
         const uiFields: { [key: string]: string } = {
             [UserFieldsEnum.Username]: msg("Username"),
-            [UserFieldsEnum.Email]: msg("Email"),
+            [UserFieldsEnum.Email]: msg("Email Address"),
+            [UserFieldsEnum.Upn]: msg("UPN"),
+        };
+        const uiPlaceholders: { [key: string]: string } = {
+            [UserFieldsEnum.Username]: msg("Username"),
+            [UserFieldsEnum.Email]: msg("you@company.com"),
             [UserFieldsEnum.Upn]: msg("UPN"),
         };
         const label = OR_LIST_FORMATTERS.format(fields.map((f) => uiFields[f]));
+        const placeholder = OR_LIST_FORMATTERS.format(fields.map((f) => uiPlaceholders[f]));
 
         return html`${this.challenge.flowDesignation === FlowDesignationEnum.Recovery
                 ? html`
@@ -338,7 +344,7 @@ export class IdentificationStage extends BaseStage<
                     id=${this.inputID}
                     type=${type}
                     name="uidField"
-                    placeholder=${label}
+                    placeholder=${placeholder}
                     autofocus=""
                     autocomplete="username"
                     spellcheck="false"
