@@ -419,7 +419,7 @@ export class IdentificationStage extends BaseStage<
                                   href=${this.challenge.passwordlessUrl}
                                   class="pf-c-button pf-m-secondary pf-m-block"
                               >
-                                  ${msg("Use a security key")}
+                                  ${msg("Use a passkey")}
                               </a>
                           </div>
                       `

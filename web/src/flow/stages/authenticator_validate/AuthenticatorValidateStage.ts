@@ -79,7 +79,7 @@ const createDevicePickerPropMap = () =>
         [DeviceClassesEnum.Webauthn]: {
             icon: "fa-mobile-alt",
             label: msg("Authenticator"),
-            description: msg("Use a security key to prove your identity."),
+            description: msg("Use a passkey to prove your identity."),
         },
         [DeviceClassesEnum.Totp]: {
             icon: "fa-clock",
