@@ -13,7 +13,7 @@ import "#flow/stages/RedirectStage";
 import Styles from "./FlowExecutor.css" with { type: "bundled-text" };
 
 import { DEFAULT_CONFIG } from "#common/api/config";
-import { pluckErrorDetail } from "#common/errors/network";
+import { parseAPIResponseError, pluckErrorDetail } from "#common/errors/network";
 import { globalAK } from "#common/global";
 import { configureSentry } from "#common/sentry/index";
 import { applyBackgroundImageProperty } from "#common/theme";
@@ -22,6 +22,7 @@ import { WebsocketClient } from "#common/ws/WebSocketClient";
 
 import { listen } from "#elements/decorators/listen";
 import { Interface } from "#elements/Interface";
+import { showAPIErrorMessage } from "#elements/messages/MessageContainer";
 import { WithBrandConfig } from "#elements/mixins/branding";
 import { WithCapabilitiesConfig } from "#elements/mixins/capabilities";
 import { LitPropertyRecord } from "#elements/types";
@@ -30,6 +31,8 @@ import { ThemedImage } from "#elements/utils/images";
 
 import { AKFlowAdvanceEvent, AKFlowInspectorChangeEvent } from "#flow/events";
 import { BaseStage, StageHost, SubmitOptions } from "#flow/stages/base";
+
+import { ConsoleLogger } from "#logger/browser";
 
 import {
     CapabilitiesEnum,
@@ -60,12 +63,18 @@ import PFTitle from "@patternfly/patternfly/components/Title/title.css";
 
 /// <reference types="../../types/lit.d.ts" />
 
+/**
+ * An executor for authentik flows.
+ *
+ * @attr {string} slug - The slug of the flow to execute.
+ * @prop {ChallengeTypes | null} challenge - The current challenge to render.
+ */
 @customElement("ak-flow-executor")
 export class FlowExecutor
     extends WithCapabilitiesConfig(WithBrandConfig(Interface))
     implements StageHost
 {
-    static readonly DefaultLayout: FlowLayoutEnum =
+    public static readonly DefaultLayout: FlowLayoutEnum =
         globalAK()?.flow?.layout || FlowLayoutEnum.Stacked;
 
     //#region Styles
@@ -97,6 +106,10 @@ export class FlowExecutor
 
         this.#challenge = value;
 
+        if (value?.flowInfo) {
+            this.flowInfo = value.flowInfo;
+        }
+
         if (!nextTitle) {
             document.title = this.brandingTitle;
         } else if (nextTitle !== previousTitle) {
@@ -118,6 +131,7 @@ export class FlowExecutor
     //#region State
 
     #inspectorLoaded = false;
+    #logger = ConsoleLogger.prefix("flow-executor");
 
     @property({ type: Boolean })
     public inspectorOpen?: boolean;
@@ -167,6 +181,19 @@ export class FlowExecutor
         });
     }
 
+    #synchronizeFlowInfo() {
+        if (!this.flowInfo) {
+            return;
+        }
+
+        const target =
+            import.meta.env.AK_BUNDLER === "storybook"
+                ? this.closest<HTMLDivElement>(".docs-story")
+                : this.ownerDocument.body;
+
+        applyBackgroundImageProperty(this.flowInfo.background, { target });
+    }
+
     //#region Listeners
 
     @listen(AKSessionAuthenticatedEvent)
@@ -185,7 +212,12 @@ export class FlowExecutor
         WebsocketClient.close();
     }
 
-    protected refresh = () => {
+    protected refresh = (): Promise<void> => {
+        if (!this.flowSlug) {
+            this.#logger.debug("Skipping refresh, no flow slug provided");
+            return Promise.resolve();
+        }
+
         this.loading = true;
 
         return new FlowsApi(DEFAULT_CONFIG)
@@ -195,17 +227,17 @@ export class FlowExecutor
             })
             .then((challenge) => {
                 this.challenge = challenge;
-
-                if (this.challenge.flowInfo) {
-                    this.flowInfo = this.challenge.flowInfo;
-                }
             })
-            .catch((error) => {
+            .catch(async (error) => {
+                const parsedError = await parseAPIResponseError(error);
+
                 const challenge: FlowErrorChallenge = {
                     component: "ak-stage-flow-error",
-                    error: pluckErrorDetail(error),
+                    error: pluckErrorDetail(parsedError),
                     requestId: "",
                 };
+
+                showAPIErrorMessage(parsedError);
 
                 this.challenge = challenge as ChallengeTypes;
             })
@@ -236,8 +268,8 @@ export class FlowExecutor
             this.layout = this.challenge?.flowInfo?.layout || FlowExecutor.DefaultLayout;
         }
 
-        if (changedProperties.has("flowInfo") && this.flowInfo) {
-            applyBackgroundImageProperty(this.flowInfo.background);
+        if (changedProperties.has("flowInfo")) {
+            this.#synchronizeFlowInfo();
         }
 
         if (
@@ -261,6 +293,10 @@ export class FlowExecutor
     ): Promise<boolean> => {
         if (!payload) throw new Error("No payload provided");
         if (!this.challenge) throw new Error("No challenge provided");
+
+        if (!this.flowSlug) {
+            throw new Error("No flow slug provided");
+        }
 
         payload.component = this.challenge.component as FlowChallengeResponseRequest["component"];
 
@@ -304,7 +340,9 @@ export class FlowExecutor
 
     //#region Render Challenge
 
-    async renderChallenge(component: ChallengeTypes["component"]): Promise<TemplateResult> {
+    protected async renderChallenge(
+        component: ChallengeTypes["component"],
+    ): Promise<TemplateResult> {
         const { challenge, inspectorOpen } = this;
 
         const stageProps: LitPropertyRecord<BaseStage<NonNullable<typeof challenge>, unknown>> = {
@@ -489,7 +527,7 @@ export class FlowExecutor
         return html`<slot class="slotted-content" name="placeholder"></slot>`;
     }
 
-    public override render(): TemplateResult {
+    protected override render(): TemplateResult {
         const { component } = this.challenge || {};
 
         return html`<ak-locale-select

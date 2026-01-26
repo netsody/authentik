@@ -213,6 +213,8 @@ export class CaptchaStage extends BaseStage<CaptchaChallenge, CaptchaChallengeRe
 
     //#region h-captcha
 
+    #hcaptchaID: HCaptchaId | null = null;
+
     protected renderHCaptchaFrame = () => {
         return html`<div
             id="ak-container"
@@ -224,14 +226,14 @@ export class CaptchaStage extends BaseStage<CaptchaChallenge, CaptchaChallengeRe
     };
 
     async executeHCaptcha() {
-        await hcaptcha.execute(
-            hcaptcha.render(this.captchaDocumentContainer, {
-                sitekey: this.challenge.siteKey,
-                callback: this.onTokenChange,
-                size: "invisible",
-                hl: this.activeLanguageTag,
-            }),
-        );
+        this.#hcaptchaID = hcaptcha.render(this.captchaDocumentContainer, {
+            sitekey: this.challenge.siteKey,
+            callback: this.onTokenChange,
+            size: "invisible",
+            hl: this.activeLanguageTag,
+        });
+
+        await hcaptcha.execute(this.#hcaptchaID);
     }
 
     async refreshHCaptchaFrame() {
@@ -239,8 +241,13 @@ export class CaptchaStage extends BaseStage<CaptchaChallenge, CaptchaChallengeRe
     }
 
     async refreshHCaptcha() {
-        window.hcaptcha.reset();
-        window.hcaptcha.execute();
+        if (this.#hcaptchaID === null) {
+            this.#logger.warn("Skipping hCaptcha refresh: no hCaptcha ID set");
+            return;
+        }
+
+        window.hcaptcha.reset(this.#hcaptchaID);
+        window.hcaptcha.execute(this.#hcaptchaID);
     }
 
     //#endregion
@@ -295,21 +302,21 @@ export class CaptchaStage extends BaseStage<CaptchaChallenge, CaptchaChallengeRe
      */
     #handlers = new Map<CaptchaProvider, CaptchaHandler>([
         [
-            "grecaptcha",
-            {
-                interactive: this.renderGReCaptchaFrame,
-                execute: this.executeGReCaptcha,
-                refreshInteractive: this.refreshGReCaptchaFrame,
-                refresh: this.refreshGReCaptcha,
-            },
-        ],
-        [
             "hcaptcha",
             {
                 interactive: this.renderHCaptchaFrame,
                 execute: this.executeHCaptcha,
                 refreshInteractive: this.refreshHCaptchaFrame,
                 refresh: this.refreshHCaptcha,
+            },
+        ],
+        [
+            "grecaptcha",
+            {
+                interactive: this.renderGReCaptchaFrame,
+                execute: this.executeGReCaptcha,
+                refreshInteractive: this.refreshGReCaptchaFrame,
+                refresh: this.refreshGReCaptcha,
             },
         ],
         [
@@ -464,7 +471,13 @@ export class CaptchaStage extends BaseStage<CaptchaChallenge, CaptchaChallengeRe
 
     //#region Resizing
 
+    #mutationObserver?: MutationObserver;
+    #resizeObserver?: ResizeObserver;
+
     #loadListener = () => {
+        this.#mutationObserver?.disconnect();
+        this.#resizeObserver?.disconnect();
+
         const iframe = this.#iframeRef.value;
         const contentDocument = iframe?.contentDocument;
 
@@ -500,7 +513,7 @@ export class CaptchaStage extends BaseStage<CaptchaChallenge, CaptchaChallengeRe
 
             // We watch for any newly inserted iframes, as they may alter the height
             // of the parent iframe...
-            const mutationObserver = new MutationObserver((mutations) => {
+            this.#mutationObserver = new MutationObserver((mutations) => {
                 for (const mutation of mutations) {
                     if (mutation.type !== "childList") continue;
 
@@ -513,15 +526,14 @@ export class CaptchaStage extends BaseStage<CaptchaChallenge, CaptchaChallengeRe
                         // doesn't yet know the correct height, but at least the user can
                         // try to load the challenge again with the correct height.
 
-                        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                        resizeObserver.observe(node as HTMLIFrameElement);
+                        this.#resizeObserver?.observe(node as HTMLIFrameElement);
 
                         requestAnimationFrame(synchronizeHeight);
                     }
                 }
             });
 
-            mutationObserver.observe(contentDocument.body, {
+            this.#mutationObserver.observe(contentDocument.body, {
                 childList: true,
                 subtree: true,
             });
@@ -537,10 +549,10 @@ export class CaptchaStage extends BaseStage<CaptchaChallenge, CaptchaChallengeRe
             };
         }
 
-        const resizeObserver = new ResizeObserver(synchronizeHeight);
+        this.#resizeObserver = new ResizeObserver(synchronizeHeight);
 
         requestAnimationFrame(() => {
-            resizeObserver.observe(contentDocument.body);
+            this.#resizeObserver?.observe(contentDocument.body);
             this.onLoad?.();
             this.#iframeLoaded = true;
         });
@@ -622,8 +634,6 @@ export class CaptchaStage extends BaseStage<CaptchaChallenge, CaptchaChallengeRe
                 contentDocument.open();
                 contentDocument.write(template);
                 contentDocument.close();
-
-                // this.#loadListener();
             } else {
                 URL.revokeObjectURL(this.#iframeSource);
 
