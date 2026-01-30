@@ -18,7 +18,7 @@ export class DeviceCodeFinish extends BaseStage<
 > {
     firstUpdated(changedProperties: PropertyValues): void {
         super.firstUpdated(changedProperties);
-        setTimeout(() => window.location.assign("https://my.netsody.io/setup"), 1000);
+        setTimeout(() => window.location.assign("https://my.netsody.io/setup"), 3000);
     }
 
     render(): TemplateResult {
